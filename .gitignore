@@ -3,3 +3,4 @@ composer.lock
 AdminService/data/
 AdminService/log/
 .env
+.rnd

@@ -10,7 +10,7 @@ class Index extends Controller {
 
     public function index() {
         try {
-            $public=RSA::getPrivate();
+            $public=RSA::getPublic();
             return $public->toString('PKCS8');
         } catch (Exception $error) {
             return $error->getMessage();

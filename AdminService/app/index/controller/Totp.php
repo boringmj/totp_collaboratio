@@ -16,10 +16,18 @@ class Totp extends Controller {
         try {
             $s=$this->param('s','');
             if(!$s) throw new Exception('参数错误');
-            $Log->write($s);
-            $data=json_decode(RSA::decrypt(base64_decode($s)),true);
-            $Log->write($data);
-            if(!$data['public_key'] || !$data['username'] || !$data['client_code'])
+            $Log->write("接收到请求: {s}",array(
+                's'=>$s,
+            ));
+            $data=RSA::decrypt(base64_decode($s));
+            $Log->write("解密后的数据: {data}",array(
+                'data'=>$data,
+            ));
+            $data=json_decode($data,true);
+            $Log->write("json解析后的数据: {data}",array(
+                'data'=>$data,
+            ));
+            if(empty($data['public_key']) || empty($data['username']) || empty($data['client_code']))
                 return throw new Exception('参数不完整');
             $public=RSA::getPublic($data['public_key']);
             // 这里只是简单判断下用户,实际上应该是从数据库中获取用户信息并且应该验证签名和检查登录状态
@@ -36,7 +44,9 @@ class Totp extends Controller {
                 'server_code'=>$server_code,
                 'client_code'=>$client_code,
             );
-            $Log->write("{data}",$data);
+            $Log->write("回传的数据: {data}",array(
+                'data'=>$data,
+            ));
             $data=RSA::encrypt(json_encode($data),$public);
             return json(1,'success',base64_encode($data));
         } catch (Exception $error) {

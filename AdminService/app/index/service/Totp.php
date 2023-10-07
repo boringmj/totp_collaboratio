@@ -123,6 +123,30 @@ class Totp {
     }
 
     /**
+     * 获取某个时间片的过期时间
+     * 
+     * @access public
+     * @param int $timeslice 时间片
+     * @return int
+     */
+    public function getExpire(?int $timeslice=null): int {
+        $time_slice=$timeslice??$this->getTimeSlice();
+        return ($time_slice+1)*$this->period;
+    }
+
+    /**
+     * 计算某个时间片的剩余时间
+     * 
+     * @access public
+     * @param int $timeslice 时间片
+     * @return int
+     */
+    public function getRemain(?int $timeslice=null): int {
+        $time_slice=$timeslice??$this->getTimeSlice();
+        return $this->getExpire($time_slice)-time();
+    }
+
+    /**
      * 验证验证码是否正确
      * 
      * @access public

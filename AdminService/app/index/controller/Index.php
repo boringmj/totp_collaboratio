@@ -33,7 +33,9 @@ class Index extends Controller {
             $File=new File('totp');
             $info=$File->get('nan1a5');
             $Totp=new Totp($info['server_code'],$info['client_code']);
-            echo $Totp->getCode();
+            echo "当前验证码:".$Totp->getCode();
+            echo "<br>\n";
+            echo "剩余时间:".$Totp->getRemain();
         } catch (Exception $error) {
             echo "错误:".$error->getMessage()."<br>\n";
         }

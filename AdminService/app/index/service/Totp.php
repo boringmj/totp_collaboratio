@@ -41,12 +41,18 @@ class Totp {
     private string $totp_key;
 
     /**
+     * TOTP秘钥支持的字符集
+     * @var string
+     */
+    private string $totp_charset='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    /**
      * 构造函数
      * 
      * @access public
      * @param string $server_code 服务端密钥
      * @param string $client_code 客户端密钥
-     * @param int $period 每个验证码的有效时间
+     * @param int $period 每个验证码的有效时间(时间片长度)
      * @param int $digits 验证码的位数
      * @param int $max 验证码容错率(周期,至少为1)
      */
@@ -72,11 +78,65 @@ class Totp {
      * @return string
      */
     private function getTotpKey(): string {
-        if(!$this->totp_key)
-            $this->totp_key=hash_hmac('sha256',$this->client_code,$this->server_code);
-        return $this->totp_key;
+            $totp_key=hash_hmac('sha256',$this->client_code,$this->server_code);
+        return $totp_key;
+    }
+
+    /**
+     * 获取某个时间戳的时间片
+     * 
+     * @access private
+     * @param int $timestamp 时间戳
+     * @return int
+     */
+    private function getTimeSlice(?int $timestamp=null): int {
+        if($timestamp===null) $timestamp=time();
+        return floor($timestamp/$this->period);
     }
 
 
+    /**
+     * 获取某个时间片的验证码
+     * 
+     * @access public
+     * @param int $timeslice 时间片
+     * @return string
+     */
+    public function getCode(?int $timeslice=null): string {
+        $time_slice=$timeslice??$this->getTimeSlice();
+        $code=hash_hmac('sha256',$time_slice,$this->totp_key);
+        $offset=hexdec(substr($code,-1));
+        $code=substr($code,0,63);
+        // 将code按3位一组分割
+        $code=str_split($code,3);
+        // 先将每组的值转换为10进制,然后取模,最后转换为字符
+        $code=array_map(function($value) use ($offset) {
+            $value=hexdec($value);
+            $value=($value+$offset)%strlen($this->totp_charset);
+            return $this->totp_charset[$value];
+        },$code);
+        // 保留指定位数
+        $code=array_slice($code,0,($this->digits>0&&$this->digits<=21)?$this->digits:21);
+        // 将数组合并为字符串
+        $code=implode('',$code);
+        return $code;
+    }
+
+    /**
+     * 验证验证码是否正确
+     * 
+     * @access public
+     * @param string $code 验证码
+     * @return bool
+     */
+    public function verify(string $code): bool {
+        $code=strtoupper($code);
+        // 最多向上或向下验证$max个时间片
+        for($i=-$this->max;$i<=$this->max;$i++) {
+            $timeslice=$this->getTimeSlice(time()+$i*$this->period);
+            if($this->getCode($timeslice)==$code) return true;
+        }
+        return false;
+    }
 
 }

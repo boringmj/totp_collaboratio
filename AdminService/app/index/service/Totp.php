@@ -115,8 +115,10 @@ class Totp {
      */
     public function getCode(?int $timeslice=null): string {
         $time_slice=$timeslice??$this->getTimeSlice();
+        $len=($this->digits>0&&$this->digits<=21)?$this->digits:21;
+        $key=$this->totp_key.'_'.$time_slice.'_'.$len;
         // 判断缓存中是否存在
-        if($code=$this->file->get($this->totp_key.'_'.$time_slice))
+        if($code=$this->file->get($key))
             return $code;
         $code=hash_hmac('sha256',$time_slice,$this->totp_key);
         $offset=hexdec(substr($code,-1));
@@ -124,7 +126,7 @@ class Totp {
         // 将code按3位一组分割
         $code=str_split($code,3);
         // 保留指定位数
-        $code=array_slice($code,0,($this->digits>0&&$this->digits<=21)?$this->digits:21);
+        $code=array_slice($code,0,$len);
         // 先将每组的值转换为10进制,然后取模,最后转换为字符
         $code=array_map(function($value) use ($offset) {
             $value=hexdec($value);
@@ -133,6 +135,8 @@ class Totp {
         },$code);
         // 将数组合并为字符串
         $code=implode('',$code);
+        // 保存到缓存中
+        $this->file->set($key,$code,true);
         return $code;
     }
 

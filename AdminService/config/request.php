@@ -18,7 +18,8 @@ return array(
     ),
     'json'=>array(
         'header'=>array( // json类型返回的header头
-            'Content-Type'=>'application/json;charset=utf-8'
+            'Content-Type'=>'application/json;charset=utf-8',
+            'Access-Control-Allow-Origin'=>'*'
         )
     )
 );

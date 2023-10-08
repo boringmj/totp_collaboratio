@@ -2,6 +2,8 @@
 
 namespace app\index\service;
 
+use AdminService\File;
+
 class Totp {
 
     /**
@@ -47,11 +49,18 @@ class Totp {
     private string $totp_charset='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     /**
+     * File对象
+     * @var File
+     */
+    private File $file;
+
+    /**
      * 构造函数
      * 
      * @access public
      * @param string $server_code 服务端密钥
      * @param string $client_code 客户端密钥
+     * @param File $file File对象
      * @param int $period 每个验证码的有效时间(时间片长度)
      * @param int $digits 验证码的位数
      * @param int $max 验证码容错率(周期,至少为1)
@@ -59,12 +68,14 @@ class Totp {
     public function __construct(
         string $server_code,
         string $client_code,
+        File $file,
         int $period=30,
         int $digits=6,
         int $max=1,
     ) {
         $this->server_code=base64_decode($server_code);
         $this->client_code=base64_decode($client_code);
+        $this->file=$file;
         $this->period=$period;
         $this->digits=$digits;
         $this->max=$max;
@@ -104,19 +115,22 @@ class Totp {
      */
     public function getCode(?int $timeslice=null): string {
         $time_slice=$timeslice??$this->getTimeSlice();
+        // 判断缓存中是否存在
+        if($code=$this->file->get($this->totp_key.'_'.$time_slice))
+            return $code;
         $code=hash_hmac('sha256',$time_slice,$this->totp_key);
         $offset=hexdec(substr($code,-1));
         $code=substr($code,0,63);
         // 将code按3位一组分割
         $code=str_split($code,3);
+        // 保留指定位数
+        $code=array_slice($code,0,($this->digits>0&&$this->digits<=21)?$this->digits:21);
         // 先将每组的值转换为10进制,然后取模,最后转换为字符
         $code=array_map(function($value) use ($offset) {
             $value=hexdec($value);
             $value=($value+$offset)%strlen($this->totp_charset);
             return $this->totp_charset[$value];
         },$code);
-        // 保留指定位数
-        $code=array_slice($code,0,($this->digits>0&&$this->digits<=21)?$this->digits:21);
         // 将数组合并为字符串
         $code=implode('',$code);
         return $code;

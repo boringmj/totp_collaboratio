@@ -32,7 +32,8 @@ class Index extends Controller {
             // echo "RSA解密:".$data."<br>\n";
             $File=new File('totp');
             $info=$File->get('nan1a5');
-            $Totp=new Totp($info['server_code'],$info['client_code']);
+            $FileCache=new File('totp_cache');
+            $Totp=new Totp($info['server_code'],$info['client_code'],$FileCache);
             echo "当前验证码:".$Totp->getCode();
             echo "<br>\n";
             echo "剩余时间:".$Totp->getRemain();

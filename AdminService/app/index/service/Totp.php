@@ -3,6 +3,7 @@
 namespace app\index\service;
 
 use AdminService\File;
+use AdminService\App;
 
 class Totp {
 
@@ -68,14 +69,14 @@ class Totp {
     public function __construct(
         string $server_code,
         string $client_code,
-        File $file,
+        ?File $file=null,
         int $period=30,
         int $digits=6,
         int $max=1,
     ) {
         $this->server_code=base64_decode($server_code);
         $this->client_code=base64_decode($client_code);
-        $this->file=$file;
+        $this->file=$file??App::get('File');
         $this->period=$period;
         $this->digits=$digits;
         $this->max=$max;

@@ -79,8 +79,7 @@ class Totp extends Controller {
             $client_code=$user_info['client_code']??'';
             if(!$server_code || !$client_code)
                 return throw new Exception('用户不存在');
-            $FileCache=new File('totp_cache');
-            $Totp=new TotpService($server_code,$client_code,$FileCache);
+            $Totp=new TotpService($server_code,$client_code);
             if(!$Totp->verify($data['code']))
                 return throw new Exception('验证码错误');
             return json(1,'success');

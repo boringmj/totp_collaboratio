@@ -56,6 +56,40 @@ class Totp extends Controller {
         }
     }
 
+    public function check(Log $Log) {
+        try {
+            $s=$this->param('s','');
+            if(!$s) throw new Exception('参数错误');
+            $Log->write("接收到请求: {s}",array(
+                's'=>$s,
+            ));
+            $data=RSA::decrypt(base64_decode($s));
+            $Log->write("解密后的数据: {data}",array(
+                'data'=>$data,
+            ));
+            $data=json_decode($data,true);
+            $Log->write("json解析后的数据: {data}",array(
+                'data'=>$data,
+            ));
+            if(empty($data['username']) || empty($data['code']))
+                return throw new Exception('参数不完整');
+            $File=new File('totp');
+            $user_info=$File->get($data['username']);
+            $server_code=$user_info['server_code']??'';
+            $client_code=$user_info['client_code']??'';
+            if(!$server_code || !$client_code)
+                return throw new Exception('用户不存在');
+            $FileCache=new File('totp_cache');
+            $Totp=new TotpService($server_code,$client_code,$FileCache);
+            if(!$Totp->verify($data['code']))
+                return throw new Exception('验证码错误');
+            return json(1,'success');
+        } catch (Exception $error) {
+            $Log->write($error->getMessage());
+            return json(0,$error->getMessage());
+        }
+    }
+
     /**
      * 生成随机字符串
      * 

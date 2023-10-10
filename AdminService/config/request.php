@@ -19,7 +19,9 @@ return array(
     'json'=>array(
         'header'=>array( // json类型返回的header头
             'Content-Type'=>'application/json;charset=utf-8',
-            'Access-Control-Allow-Origin'=>'*'
+            'Access-Control-Allow-Origin'=>'*',
+            'Access-Control-Allow-Methods'=>'GET,POST,PUT,DELETE,OPTIONS',
+            'Access-Control-Allow-Headers'=>'X-Requested-With,Content-Type,Accept,Origin,Authorization'
         )
     )
 );

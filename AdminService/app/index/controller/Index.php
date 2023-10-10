@@ -8,14 +8,20 @@ use AdminService\File;
 use app\index\service\RSA;
 use app\index\service\Totp;
 
+use function AdminService\common\json;
+
 class Index extends Controller {
 
     public function index() {
+        return $this->view();
+    }
+
+    public function public_key() {
         try {
             $public=RSA::getPublic();
-            return $public->toString('PKCS8');
+            return json(1,'success',array('public'=>$public->toString('PKCS8')));
         } catch (Exception $error) {
-            return $error->getMessage();
+            return json(0,$error->getMessage());
         }
     }
 
